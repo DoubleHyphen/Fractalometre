@@ -27,6 +27,6 @@ As mentioned above, sample encoding functions are provided  in the `morton_funct
 
 **`get_fd_lin_fit`** calculates the fractal dimension by taking the cumulative histogram as a log-log scale, ignoring points that occur after the cut-off, and taking the slope of the Linear Fit of the points that remain. The user can choose to either divide each axis in turn (`all_points`) or divide them all at the same time (`equal_division`).
 
-**`get_lacun`** calculates the lacunarity for each scale. Please note that the lacunarity is a scale-dependent quantity, and cannot be computed analytically.
+**`get_lacun`** calculates the lacunarity for each scale. Please note that the lacunarity is a scale-dependent quantity, and cannot be computed analytically. Because it is computed separately for each scale, there is no `equal_division` option, as it would basically amount to just ignoring some parts of the resulting array.
 
 **`get_fd_and_lacun`** is an untested, almost-pseudocode combination of all the previous functions into a complete Fractal Analysis algorithm (that hopefully compiles).
