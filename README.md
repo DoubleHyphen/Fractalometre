@@ -1,11 +1,11 @@
 # Fractalometre
-A collection of functions to help with fractal analysis. They are all based on the "Z-box merging" method described in the paper of the same name.
+A collection of functions in various languages to help with fractal analysis. They are all based on the "Z-box merging" method described in the paper of the same name.
 
 This code is very much a work in progress. Contributions are welcome.
 
 
 
-### Explanation of the program:
+### Explanation of the C++ program:
 #### `morton_functions.cpp`:
 This file provides sample Morton-encoding functions for every possible combination of `uint8_t`, `uint16_t`, `uint32_t` and `uint64_t`. The encoding happens by inserting an equal number of zeroes before each bit, as described in https://en.wikipedia.org/wiki/Z-order_curve. The functions also shift the resulting Morton Key left as needed, for convenience.
 
