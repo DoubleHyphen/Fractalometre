@@ -8,34 +8,22 @@ extern crate rayon;
 mod bloatables;
 
 use itertools::Itertools;
-use bloatables::Bloatable;
+//use bloatables;
 #[allow(unused_imports)]
 use rayon::prelude::*;
 
 
 
 pub fn get_morton_key<NormCoor, Key, NormSamp>(norm_samp: NormSamp) -> Key
-where NormCoor: Bloatable + num_traits::int::PrimInt,
-      Key: num_traits::int::PrimInt,
+where NormCoor: num_traits::int::PrimInt,
+      Key: num_traits::int::PrimInt + std::ops::BitOrAssign + std::ops::BitAndAssign + std::ops::ShlAssign<usize>,
       NormSamp: IntoIterator<Item = NormCoor>,
-      <NormSamp as IntoIterator>::IntoIter: ExactSizeIterator,
-      <NormCoor as Bloatable>::Dub:  num_traits::int::PrimInt,
-      <NormCoor as Bloatable>::Quat: num_traits::int::PrimInt,
-      <NormCoor as Bloatable>::Oct:  num_traits::int::PrimInt,
+      <NormSamp as IntoIterator>::IntoIter: ExactSizeIterator
 {
-    let siz_rat = std::mem::size_of::<Key>()/std::mem::size_of::<NormCoor>();
     let eater = norm_samp.into_iter();
-    if siz_rat/eater.len() < 1 {panic!("The key must be at least as large as all the coordinates put together.");}
     
-    let bloat = |x: NormCoor| match siz_rat
-    {
-              1  => Key::from(x)          .expect("Key type incompatible."),
-              2  => Key::from(x.bloat_2()).expect("Key type incompatible."),
-            3|4  => Key::from(x.bloat_4()).expect("Key type incompatible."),
-        5|6|7|8  => Key::from(x.bloat_8()).expect("Key type incompatible."),
-        _ => unimplemented!(),
-    };
-    eater.map(bloat)
+    let bloat_fn = |x: NormCoor| bloatables::bloat::<NormCoor, Key>(x);
+    eater.map(bloat_fn)
             .fold(Key::from(0).unwrap(), |acc, x| (acc << 1) | x)
 }
 
@@ -52,8 +40,8 @@ where
     set.into_iter()
         .map(get_key_from_sample)
         .sorted()
-        .windows(2)
-        .map(|xs| xs[1] ^ xs[0])
+        .tuple_windows()
+        .map(|(a, b)| a ^ b)
         .map(|x| x.leading_zeros() as u8)
         .collect()
 }
@@ -87,8 +75,8 @@ pub fn get_results_from_clzs(input: Vec<u8>, key_bit_amt: u8) -> (Vec<u32>, Vec<
 
 pub fn finalise_results(s: Vec<u32>, squares: Vec<u64>, sample_size: u32, coor_bit_amt: u8, key_bit_amt: u8) -> (f64, Vec<f64>, Vec<f64>) {
     let step = (key_bit_amt/coor_bit_amt) as usize;
-    let result_2 = s.iter().skip(step-1).step(step).map(|&x| f64::from(x).log2()).collect_vec();
-    let result_3 = squares.into_iter().zip(s.into_iter()).skip(step-1).step(step).map(|(a, b)| (a as f64)*(b as f64)/(sample_size as f64 * sample_size as f64) - 1.0).collect_vec();
+    let result_2 = s.iter().skip(step-1).step_by(step).map(|&x| f64::from(x).log2()).collect_vec();
+    let result_3 = squares.into_iter().zip(s.into_iter()).skip(step-1).step_by(step).map(|(a, b)| (a as f64)*(b as f64)/(sample_size as f64 * sample_size as f64) - 1.0).collect_vec();
     let cap = (sample_size as f64).log2();
     let result_1_lim = result_2.iter().position(|x| *x>(0.9)*cap).unwrap_or(coor_bit_amt as usize);
     let result_1 = get_inclination(&result_2[0..result_1_lim]);
